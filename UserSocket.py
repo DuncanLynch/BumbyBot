@@ -8,6 +8,7 @@ class UserSocket:
     IP = ""
     Port = ""
     SteamID = ""
+    Messages = []
 
     def __init__(self, pt, ip, port, steamid):
         self.Socket = RustSocket(ip = ip, player_token=pt, steam_id=steamid, port=port)
@@ -22,14 +23,25 @@ class UserSocket:
         return "Message sent."
 
     async def GetTeamMembers(self):
-        info = await self.Socket.get_team_info
+        info = await self.Socket.get_team_info()
         tlist = info.members
         resultantList = list()
         for i in range(len(tlist)):
             resultantList.append((tlist[i].name, tlist[i].is_online))
         return resultantList
     
-    #self.lists for current messages returning only the messages that didn't already exist.
     async def GetNewMessages(self):
-        pass
+        messages = await self.Socket.get_team_chat()
+        if len(self.Messages) == len(messages):
+            return False
+        newmessages = messages[len(self.Messages):]
+        self.Messages = messages
+        return newmessages
+    
+    async def GetMap(self):
+        map = await self.Socket.get_map(add_grid=True)
+        return map
+    
+
+
         
