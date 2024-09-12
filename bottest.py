@@ -4,7 +4,8 @@ from discord.ext import commands
 import time
 
 
-DISCORD_API_KEY = None
+f = open("token.txt", "r")
+DISCORD_API_KEY = f.read()
 
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all(),)
 

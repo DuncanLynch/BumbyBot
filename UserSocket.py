@@ -7,12 +7,12 @@ class UserSocket:
     PlayerToken = "" 
     IP = ""
     Port = ""
-    SteamID = ""
+    playerID = ""
     Messages = []
 
-    def __init__(self, pt, ip, port, steamid):
-        self.Socket = RustSocket(ip = ip, player_token=pt, steam_id=steamid, port=port)
-        self.IP = ip, self.PlayerToken = pt, self.SteamID = steamid, self.Port = port
+    def __init__(self, ip, playerid, pt, port):
+        self.Socket = RustSocket(ip = ip, player_token=pt, steam_id=playerid, port=port)
+        self.IP = ip, self.PlayerToken = pt, self.playerID = playerid, self.Port = port
         return
         
 
@@ -42,6 +42,6 @@ class UserSocket:
         map = await self.Socket.get_map(add_grid=True)
         return map
     
-
+    #to add: listener for rustplus notifications, and security camera movement detection
 
         
