@@ -4,7 +4,7 @@ from discord.ext import commands
 import time
 
 
-DISCORD_API_KEY = "MTI3NjM0MDI4NTQ3OTA2MzU1Mg.G1qSay.NCC7e1TopmoYhmoe2d_z76K1Tu7dwD9jSPnfuM"
+DISCORD_API_KEY = None
 
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all(),)
 
