@@ -3,7 +3,7 @@ import asyncio
 import time
 
 class UserSocket:
-    Socket = RustSocket()
+    Socket = RustSocket
     PlayerToken = "" 
     IP = ""
     Port = ""
@@ -12,7 +12,10 @@ class UserSocket:
 
     def __init__(self, ip, playerid, pt, port):
         self.Socket = RustSocket(ip = ip, player_token=pt, steam_id=playerid, port=port)
-        self.IP = ip, self.PlayerToken = pt, self.playerID = playerid, self.Port = port
+        self.IP = ip
+        self.PlayerToken = pt
+        self.playerID = playerid
+        self.Port = port
         return
         
 

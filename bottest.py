@@ -2,6 +2,7 @@ import asyncio
 import discord
 from discord.ext import commands
 import time
+import bot_commands
 
 
 f = open("token.txt", "r")
@@ -20,6 +21,7 @@ async def send_embed(ctx):
 @bot.event
 async def on_ready():
     print("bot ready")
+    await bot.add_cog(bot_commands.RustCommands(bot))
 
 
 
