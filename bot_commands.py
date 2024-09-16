@@ -39,11 +39,18 @@ class RustCommands(commands.Cog):
         for i in range(len(arg)):
             message += arg[0]
         socket = self.UserData.get(ctx.author.name)
-        await socket.SendMessage(message, ctx.author.name)
-        embed = discord.Embed(title="Message Sent", description="",color=discord.Color.brand_red)
-        embed.add_field(title="",value="Message sent. If it doesn't appear in game, then your socket is expired.")
+        try:
+            await socket.SendMessage(message, ctx.author.name)
+        except:
+            embed = discord.Embed(title="Message Failed", description="",color=discord.Color.brand_red())
+            embed.add_field(name="",value="Message failed to send, websocket seems to be disconnected.")
+            embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
+            await ctx.send(embed=embed)
+            return
+        embed = discord.Embed(title="Message Sent", description="",color=discord.Color.brand_green())
+        embed.add_field(name="",value="Message sent. If it doesn't appear in game, then your socket is expired.")
         embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
-        await ctx.send(embed)
+        await ctx.send(embed=embed)
         return
         
             
