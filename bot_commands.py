@@ -8,7 +8,7 @@ class RustCommands(commands.Cog):
     UserData = {}
 
     def __init__(self, bot):
-        #do mysql stuff later i dont feel like doing it now LMAOOOOOOOOOOOOOOOO
+        #do mysql stuff later i dont feel like doing it now LMAOOOOOOOOOOOOOOO
         self.bot = bot
     
     @commands.command()
