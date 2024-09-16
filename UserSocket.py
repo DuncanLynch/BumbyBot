@@ -20,7 +20,7 @@ class UserSocket:
         
 
     async def SendMessage(self, message, name):
-        if self.Socket == False or self.PlayerToken == "" or self.IP == "" or self.Port == "" or self.SteamID == "":
+        if self.Socket == False or self.PlayerToken == "" or self.IP == "" or self.Port == "" or self.playerID == "":
             return "Error: Socket Info not initalized."
         await self.Socket.send_team_message(name + " Sent an API message: " + message)
         return "Message sent."

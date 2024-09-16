@@ -26,8 +26,24 @@ class RustCommands(commands.Cog):
         if len(arg) != 4:
             await ctx.send("Error: invalid parameters.")
             return
-        print(arg)
         currSocket = UserSocket.UserSocket(arg[0], arg[1], arg[2], arg[3])
         self.UserData[ctx.author.name] = currSocket
         await ctx.send("Socket created. If further commands don't work, unpair and pair again in the proper form. If a server wipes or you change server you will have to pair again.")
         
+    @commands.command()
+    async def send_message(self, ctx, *arg):
+        message = ""
+        if not(self.UserData.get(ctx.author.name)):
+            await ctx.send("You do not have a socket connected. Pair and retry.")
+            return
+        for i in range(len(arg)):
+            message += arg[0]
+        socket = self.UserData.get(ctx.author.name)
+        await socket.SendMessage(message, ctx.author.name)
+        embed = discord.Embed(title="Message Sent", description="",color=discord.Color.brand_red)
+        embed.add_field(title="",value="Message sent. If it doesn't appear in game, then your socket is expired.")
+        embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
+        await ctx.send(embed)
+        return
+        
+            
