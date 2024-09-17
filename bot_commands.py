@@ -6,7 +6,15 @@ import time
 
 class RustCommands(commands.Cog): 
 
-    UserData = {}
+    Socket = UserSocket
+    GuildData = {}
+    UserData = {
+        "testSuperExamplethatwillneverbecaughtbyadiscordservername": {
+            "ActiveTeamChat": False,
+            "RemoveTeamChat":  False,
+        }
+    }
+
 
     def __init__(self, bot):
         #do mysql stuff later i dont feel like doing it now LMAOOOOOOOOOOOOOOO
@@ -15,7 +23,10 @@ class RustCommands(commands.Cog):
     @commands.command()
     async def pair(self, ctx, *arg):
         if self.UserData.get(ctx.author.name):
-            await ctx.send("You already have a Socket connected, remove it first before pairing again.")
+            embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
+            embed.add_field(name="",value="You already have an active Socket paired.")
+            embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
+            await ctx.send(embed=embed)
             return
         if len(arg) == 0:
             embeded_msg = discord.Embed(title="Link to your pairing details", description="\n",color=discord.Color.blue(),url="https://companion-rust.facepunch.com/login")
@@ -31,13 +42,20 @@ class RustCommands(commands.Cog):
         await currSocket.connect()
         await currSocket.SendMessage("I just connected a websocket using Bumbybot!", ctx.author.name)
         self.UserData[ctx.author.name] = currSocket
-        await ctx.send("Socket created. If further commands don't work, unpair and pair again in the proper form. If a server wipes or you change server you will have to pair again.")
-        
+
+        embed = discord.Embed(title="Socket Connected", description="",color=discord.Color.brand_green())
+        embed.add_field(name="",value="Your socket has been created. If no messages appear then you created the socket incorrectly and must unpair before pairing correctly again.")
+        embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
+        await ctx.send(embed=embed)
+
     @commands.command()
     async def message(self, ctx, *arg):
         message = ""
         if not(self.UserData.get(ctx.author.name)):
-            await ctx.send("You do not have a socket connected. Pair and retry.")
+            embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
+            embed.add_field(name="",value="You do not have an active Socket paired.")
+            embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
+            await ctx.send(embed=embed)
             return
         for i in range(len(arg)):
             message += arg[i] + " "
@@ -60,7 +78,10 @@ class RustCommands(commands.Cog):
     @commands.command()
     async def teamlist(self, ctx):
         if not(self.UserData.get(ctx.author.name)):
-            await ctx.send("You do not have a socket connected. Pair and retry.")
+            embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
+            embed.add_field(name="",value="You do not have an active Socket paired.")
+            embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
+            await ctx.send(embed=embed)
             return
         socket = self.UserData.get(ctx.author.name)
         try:
@@ -73,19 +94,89 @@ class RustCommands(commands.Cog):
             return
         l = ""
         for i in range(len(tlist)):
-            l += tlist[i][0] + ": Online"
             if tlist[i][1]:
-                l+= " :white_check_mark:\n"
+                l+= tlist[i][0] + " /Online/ :white_check_mark:\n"
             else:
-                l+= " :x:\n"
+                l+= tlist[i][0] + " /Offline/ :x:\n"
         embed = discord.Embed(title="Current List of Team Members", description="",color=discord.Color.brand_green())
         embed.add_field(name="",value=l)
         embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
         await ctx.send(embed=embed)
 
+    #make this work across multiple servers
     @commands.command()
     async def GrabTeamMessages(self, ctx):
+        if not(self.UserData.get(ctx.author.name)):
+            embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
+            embed.add_field(name="",value="You do not have an active Socket paired.")
+            embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
+            await ctx.send(embed=embed)
+            return
         
+        if not(self.GuildData[ctx.guild.name] is dict):
+            self.GuildData[ctx.guild.name] = {
+            "ActiveTeamChat": False,
+            "RemoveTeamChat": False,
+            "TeamChatChannel": "",
+        }
+
+        if self.GuildData.get(ctx.guild.name).get("ActiveTeamChat"):
+            embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
+            embed.add_field(name="",value="You already have an active teamchat in a channel.")
+            embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
+            await ctx.send(embed=embed)
+            return 
+        
+        embed = discord.Embed(title="Messages Set Up", description="",color=discord.Color.brand_green())
+        embed.add_field(name="",value="Team Messages will be posted in this channel. If it doesn't appear, then your socket is invalid.")
+        embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
+        await ctx.send(embed=embed)
+
+        self.GuildData[ctx.guild.name]["ActiveTeamChat"] = True
+        self.GuildData[ctx.guild.name]["RemoveTeamChat"] = False
+        self.GuildData[ctx.guild.name]["TeamChatChannel"] = ctx.channel
+
+        while not(self.GuildData[ctx.guild.name]["RemoveTeamChat"]):
+            messagelist = await self.Socket.GetNewMessages()
+            for i in range(len(messagelist)):
+                m = "[" + messagelist[i].time + "]" + " " + messagelist[i].name + ": " + messagelist[i].message
+                await ctx.send(m)
+            time.sleep(5)
+
+        return
+
+    @commands.command()
+    async def EndTeamMessages(self, ctx):
+        if not(self.UserData.get(ctx.author.name)):
+            embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
+            embed.add_field(name="",value="You do not have an active Socket paired.")
+            embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
+            await ctx.send(embed=embed)
+            return
+
+        if not(self.ActiveTeamChat):
+            embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
+            embed.add_field(name="",value="You do not have an active teamchat in a channel.")
+            embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
+            await ctx.send(embed=embed)
+            return 
+
+
+        if not(ctx.channel == self.team_chat_channel):
+            embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
+            embed.add_field(name="",value="You must enter this command in the channel with the team chat active.")
+            embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
+            await ctx.send(embed=embed)
+            return 
+
+        embed = discord.Embed(title="Messages deactivated", description="",color=discord.Color.brand_green())
+        embed.add_field(name="",value="Team Messages will no longer be posted in this channel.")
+        embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
+        await ctx.send(embed=embed)
+
+        self.GuildData[ctx.guild.name]["ActiveTeamChat"] = False
+        self.GuildData[ctx.guild.name]["RemoveTeamChat"] = True
+
 
             
 
