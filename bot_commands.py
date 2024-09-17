@@ -12,7 +12,7 @@ class RustCommands(commands.Cog):
         self.bot = bot
     
     @commands.command()
-    async def Pair(self, ctx, *arg):
+    async def pair(self, ctx, *arg):
         if self.UserData.get(ctx.author.name):
             await ctx.send("You already have a Socket connected, remove it first before pairing again.")
             return
@@ -31,7 +31,7 @@ class RustCommands(commands.Cog):
         await ctx.send("Socket created. If further commands don't work, unpair and pair again in the proper form. If a server wipes or you change server you will have to pair again.")
         
     @commands.command()
-    async def send_message(self, ctx, *arg):
+    async def message(self, ctx, *arg):
         message = ""
         if not(self.UserData.get(ctx.author.name)):
             await ctx.send("You do not have a socket connected. Pair and retry.")
@@ -52,5 +52,32 @@ class RustCommands(commands.Cog):
         embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
         await ctx.send(embed=embed)
         return
-        
+     
+    @commands.command()
+    async def teamlist(self, ctx):
+        if not(self.UserData.get(ctx.author.name)):
+            await ctx.send("You do not have a socket connected. Pair and retry.")
+            return
+        socket = self.UserData.get(ctx.author.name)
+        try:
+            tlist = await socket.GetTeamMembers()
+        except:
+            embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
+            embed.add_field(name="",value="Websocket seems to be disconnected.")
+            embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
+            await ctx.send(embed=embed)
+            return
+        l = ""
+        for i in range(len(tlist)):
+            l += tlist[0] + ": Online"
+            if tlist[1]:
+                l+= ":white_check_mark:\n"
+            else:
+                l+= ":x:\n"
+        embed = discord.Embed(title="Current List of Team Members", description="",color=discord.Color.brand_green())
+        embed.add_field(name="",value=l)
+        embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
+        await ctx.send(embed=embed)
+            
+
             
