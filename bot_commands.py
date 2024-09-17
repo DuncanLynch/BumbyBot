@@ -17,7 +17,7 @@ class RustCommands(commands.Cog):
             await ctx.send("You already have a Socket connected, remove it first before pairing again.")
             return
         if len(arg) == 0:
-            embeded_msg = discord.Embed(title="Link to your pairing details", description="\n",color=discord.Color.brand_red(),url="https://companion-rust.facepunch.com/login")
+            embeded_msg = discord.Embed(title="Link to your pairing details", description="\n",color=discord.Color.blue(),url="https://companion-rust.facepunch.com/login")
             embeded_msg.add_field(name="Pairing", value="In order to pair yourself with rustplus, go to the link at the top and link your steam account.", inline=True)
             embeded_msg.add_field(name = "Sending a proper request", value="Then, copy your: IP, playerID, playerToken, and port. Send another pairing request in the form !pair IP, playerID, playerToken, port ", inline=False)
             embeded_msg.set_footer(text="Responding to " + ctx.author.name, icon_url=ctx.author.avatar)
