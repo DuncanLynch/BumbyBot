@@ -1,7 +1,8 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 import asyncio
 import UserSocket
+import time
 
 class RustCommands(commands.Cog): 
 
@@ -81,6 +82,11 @@ class RustCommands(commands.Cog):
         embed.add_field(name="",value=l)
         embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
         await ctx.send(embed=embed)
+
+    @commands.command()
+    async def GrabTeamMessages(self, ctx):
+        
+
             
 
             
