@@ -12,6 +12,7 @@ class UserSocket:
 
     def __init__(self, ip, playerid, pt, port):
         self.Socket = RustSocket(ip = ip, player_token=pt, steam_id=playerid, port=port)
+        sock = self.Socket
         self.IP = ip
         self.PlayerToken = pt
         self.playerID = playerid
@@ -19,10 +20,20 @@ class UserSocket:
         return
         
 
+    async def connect(self):
+        await self.Socket.connect()
+        return
+    async def disconnect(self):
+        await self.Socket.disconnect()
+        return
+
     async def SendMessage(self, message, name):
         if self.Socket == False or self.PlayerToken == "" or self.IP == "" or self.Port == "" or self.playerID == "":
             return "Error: Socket Info not initalized."
+ 
+        print("User socket attempting to message")
         await self.Socket.send_team_message(name + " Sent an API message: " + message)
+
         return "Message sent."
 
     async def GetTeamMembers(self):
