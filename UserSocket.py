@@ -47,13 +47,13 @@ class UserSocket:
     async def GetNewMessages(self):
         messages = await self.Socket.get_team_chat()
         if len(self.Messages) == len(messages):
-            return False
+            return []
         newmessages = messages[len(self.Messages):]
         self.Messages = messages
         return newmessages
     
     async def GetMap(self):
-        map = await self.Socket.get_map(add_grid=True)
+        map = await self.Socket.get_map(add_grid=True, add_icons=True,add_events=True,add_vending_machines=True)
         return map
     
     #to add: listener for rustplus notifications, and security camera movement detection

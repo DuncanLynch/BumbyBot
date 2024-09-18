@@ -3,6 +3,7 @@ from discord.ext import commands, tasks
 import asyncio
 import UserSocket
 import time
+import io
 
 class RustCommands(commands.Cog): 
 
@@ -113,7 +114,7 @@ class RustCommands(commands.Cog):
             await ctx.send(embed=embed)
             return
         
-        if not(self.GuildData[ctx.guild.name] is dict):
+        if not(self.GuildData.get(ctx.guild.name)):
             self.GuildData[ctx.guild.name] = {
             "ActiveTeamChat": False,
             "RemoveTeamChat": False,
@@ -136,13 +137,23 @@ class RustCommands(commands.Cog):
         self.GuildData[ctx.guild.name]["RemoveTeamChat"] = False
         self.GuildData[ctx.guild.name]["TeamChatChannel"] = ctx.channel
 
-        while not(self.GuildData[ctx.guild.name]["RemoveTeamChat"]):
-            messagelist = await self.Socket.GetNewMessages()
-            for i in range(len(messagelist)):
-                m = "[" + messagelist[i].time + "]" + " " + messagelist[i].name + ": " + messagelist[i].message
-                await ctx.send(m)
-            time.sleep(5)
+        socket = self.UserData.get(ctx.author.name)
+        await socket.disconnect()
 
+        while not(self.GuildData[ctx.guild.name]["RemoveTeamChat"]):
+            await socket.connect()
+            try:
+                
+                messagelist = await socket.GetNewMessages()
+            except:
+                print("Error occured: Breaking from the messages list.")
+                break
+            for i in range(len(messagelist)):
+                m = "[" + str(messagelist[i].time) + "]" + " " + messagelist[i].name + ": " + messagelist[i].message
+                await ctx.send(m)
+            await socket.disconnect()
+            time.sleep(5)
+        await socket.connect()
         return
 
     @commands.command()
@@ -154,7 +165,7 @@ class RustCommands(commands.Cog):
             await ctx.send(embed=embed)
             return
 
-        if not(self.ActiveTeamChat):
+        if not(self.GuildData.get(ctx.guild.name)) or not(self.GuildData.get(ctx.guild.name).get("ActiveTeamChat")):
             embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
             embed.add_field(name="",value="You do not have an active teamchat in a channel.")
             embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
@@ -162,7 +173,7 @@ class RustCommands(commands.Cog):
             return 
 
 
-        if not(ctx.channel == self.team_chat_channel):
+        if not(ctx.channel == self.GuildData.get(ctx.guild.name).get("TeamChatChannel")):
             embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
             embed.add_field(name="",value="You must enter this command in the channel with the team chat active.")
             embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
@@ -177,6 +188,32 @@ class RustCommands(commands.Cog):
         self.GuildData[ctx.guild.name]["ActiveTeamChat"] = False
         self.GuildData[ctx.guild.name]["RemoveTeamChat"] = True
 
+    @commands.command()
+    async def map(self, ctx):
+        if not(self.UserData.get(ctx.author.name)):
+            embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
+            embed.add_field(name="",value="You do not have an active Socket paired.")
+            embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
+            await ctx.send(embed=embed)
+            return
+
+        sock = self.UserData.get(ctx.author.name)
+
+        try:
+            GameMap = await sock.GetMap()
+        except:
+            embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
+            embed.add_field(name="",value="Map failed to generate.")
+            embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
+            await ctx.send(embed=embed)
+            return
+        6
+
+        with io.BytesIO() as image_binary:
+            GameMap.save(image_binary, 'PNG')
+            image_binary.seek(0)
+            await ctx.send(file=discord.File(fp=image_binary, filename='image.png'))
+        return
 
             
 
