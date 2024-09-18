@@ -1,8 +1,10 @@
-from rustplus import RustSocket
+from rustplus import RustSocket, ServerDetails, CommandOptions, ChatCommand, Command
 import asyncio
 import time
 
 class UserSocket:
+    options = CommandOptions(prefix="!")
+    Sdetails = ServerDetails
     Socket = RustSocket
     PlayerToken = "" 
     IP = ""
@@ -11,14 +13,20 @@ class UserSocket:
     Messages = []
 
     def __init__(self, ip, playerid, pt, port):
-        self.Socket = RustSocket(ip = ip, player_token=pt, steam_id=playerid, port=port)
-        sock = self.Socket
+        self.Sdetails = ServerDetails(ip = ip, player_token=pt, player_id=playerid, port=port)
+        self.Socket = RustSocket(server_details=self.Sdetails)
         self.IP = ip
         self.PlayerToken = pt
         self.playerID = playerid
-        self.Port = port
+        self.Port = port    
         return
-        
+
+    @Command(server_details=Sdetails)
+    async def msg(self, command: ChatCommand):
+        s = "[" + command.time + "] " + command.sender_name +": "
+        for i in range(len(command.args)):
+            s += command.args[i] + " "
+        self.Messages.append(s)
 
     async def connect(self):
         await self.Socket.connect()
@@ -41,21 +49,20 @@ class UserSocket:
         tlist = info.members
         resultantList = list()
         for i in range(len(tlist)):
-            resultantList.append((tlist[i].name, tlist[i].is_online))
+            resultantList.append((tlist[i].name, tlist[i].is_online, tlist[i].steam_id))
         return resultantList
     
     async def GetNewMessages(self):
-        messages = await self.Socket.get_team_chat()
-        if len(self.Messages) == len(messages):
-            return []
-        newmessages = messages[len(self.Messages):]
-        self.Messages = messages
-        return newmessages
+        messages = self.Messages.copy()
+        self.Messages.clear()
+        
+        return messages
     
     async def GetMap(self):
         map = await self.Socket.get_map(add_grid=True, add_icons=True,add_events=True,add_vending_machines=True)
         return map
     
-    #to add: listener for rustplus notifications, and security camera movement detection
+    async def PromoteToLeader(self, STEAMID):
+        await self.Socket.promote_to_team_leader(steamid=STEAMID)
 
         

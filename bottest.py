@@ -11,7 +11,6 @@ DISCORD_API_KEY = f.read()
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 
 
-
 @bot.event
 async def on_ready():
     print("bot ready")

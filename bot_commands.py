@@ -41,7 +41,6 @@ class RustCommands(commands.Cog):
             return
         currSocket = UserSocket.UserSocket(ip=str(arg[0]), playerid=str(arg[1]), pt=str(arg[2]), port=str(arg[3]))
         await currSocket.connect()
-        await currSocket.SendMessage("I just connected a websocket using Bumbybot!", ctx.author.name)
         self.UserData[ctx.author.name] = currSocket
 
         embed = discord.Embed(title="Socket Connected", description="",color=discord.Color.brand_green())
@@ -50,7 +49,23 @@ class RustCommands(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command()
-    async def message(self, ctx, *arg):
+    async def unpair(self, ctx):
+        if not(self.UserData.get(ctx.author.name)):
+            embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
+            embed.add_field(name="",value="You do not have an active Socket paired.")
+            embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
+            await ctx.send(embed=embed)
+            return
+        self.UserData[ctx.author.name] = UserSocket
+        embed = discord.Embed(title="Socket Cleared", description="",color=discord.Color.brand_red())
+        embed.add_field(name="",value="You no longer have an active Socket paired.")
+        embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
+        await ctx.send(embed=embed)
+        return
+        
+
+    @commands.command()
+    async def msg(self, ctx, *arg):
         message = ""
         if not(self.UserData.get(ctx.author.name)):
             embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
@@ -96,9 +111,9 @@ class RustCommands(commands.Cog):
         l = ""
         for i in range(len(tlist)):
             if tlist[i][1]:
-                l+= tlist[i][0] + " /Online/ :white_check_mark:\n"
+                l+= "|" + tlist[i][2] + "| " + tlist[i][0] + " /Online/ :white_check_mark:\n"
             else:
-                l+= tlist[i][0] + " /Offline/ :x:\n"
+                l+= "|" + tlist[i][2] + "| " + tlist[i][0] + " /Offline/ :x:\n"
         embed = discord.Embed(title="Current List of Team Members", description="",color=discord.Color.brand_green())
         embed.add_field(name="",value=l)
         embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
@@ -138,10 +153,10 @@ class RustCommands(commands.Cog):
         self.GuildData[ctx.guild.name]["TeamChatChannel"] = ctx.channel
 
         socket = self.UserData.get(ctx.author.name)
-        await socket.disconnect()
+
 
         while not(self.GuildData[ctx.guild.name]["RemoveTeamChat"]):
-            await socket.connect()
+
             try:
                 
                 messagelist = await socket.GetNewMessages()
@@ -149,11 +164,11 @@ class RustCommands(commands.Cog):
                 print("Error occured: Breaking from the messages list.")
                 break
             for i in range(len(messagelist)):
-                m = "[" + str(messagelist[i].time) + "]" + " " + messagelist[i].name + ": " + messagelist[i].message
+                m = messagelist[i]
                 await ctx.send(m)
-            await socket.disconnect()
+
             time.sleep(5)
-        await socket.connect()
+
         return
 
     @commands.command()
@@ -215,6 +230,28 @@ class RustCommands(commands.Cog):
             await ctx.send(file=discord.File(fp=image_binary, filename='image.png'))
         return
 
-            
+    @commands.command()
+    async def promote(self, ctx, *arg):
+        if not(self.UserData.get(ctx.author.name)):
+            embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
+            embed.add_field(name="",value="You do not have an active Socket paired.")
+            embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
+            await ctx.send(embed=embed)
+            return
+        
+        if len(arg) != 1:
+            embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
+            embed.add_field(name="",value="Invalid parameters.\nUsage: !promote <steamID>")
+            embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
+            await ctx.send(embed=embed)
+            return
+        try:
+            self.Socket.PromoteToLeader(arg[0])
+        except:
+            embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
+            embed.add_field(name="",value="Promotion failed.")
+            embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
+            await ctx.send(embed=embed)
+            return
 
             
