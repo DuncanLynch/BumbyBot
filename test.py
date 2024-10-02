@@ -1,26 +1,33 @@
 import asyncio
 import time
-from rustplus import RustSocket, CommandOptions, Command, ServerDetails
-IP = "185.248.134.151"
-PORT = "28035"
-STEAMID = "76561198167575143"
-TOKEN = "1572579393"
-details = ServerDetails(IP, PORT, STEAMID, TOKEN)
-options = CommandOptions(prefix="")
-socket = RustSocket(IP, PORT, STEAMID, TOKEN)
+from rustplus import RustSocket, ServerDetails, CommandOptions, ChatCommand, Command
+IP = "45.88.230.93"
+PORT = "28093"
+STEAMID = 76561198167575143
+TOKEN = 817066201
 
-@Command(details)
-async def hi(command: Command):
-    await socket.send_team_message("Hi")
 
 async def main():
-    
+    server_details = ServerDetails(IP, PORT, STEAMID, TOKEN)
+    socket = RustSocket(server_details)
+
+    options = CommandOptions(prefix="!")
 
 
     
     await socket.connect()
+
+    m = await socket.get_team_chat()
+    time.sleep(.5)
+    await socket.send_team_message("this should be the extraneous chat message!")
+
+    n = await socket.get_team_chat()
+
+    print(len(m))
+    print(len(n))
     
-    messages = await socket.get_team_chat()
+    x = n[len(m):]
+    print(x[0].message)
 
     await socket.disconnect()
 

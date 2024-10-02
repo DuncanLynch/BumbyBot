@@ -21,13 +21,6 @@ class UserSocket:
         self.Port = port    
         return
 
-    @Command(server_details=Sdetails)
-    async def msg(self, command: ChatCommand):
-        s = "[" + command.time + "] " + command.sender_name +": "
-        for i in range(len(command.args)):
-            s += command.args[i] + " "
-        self.Messages.append(s)
-
     async def connect(self):
         await self.Socket.connect()
         return
@@ -53,10 +46,12 @@ class UserSocket:
         return resultantList
     
     async def GetNewMessages(self):
-        messages = self.Messages.copy()
-        self.Messages.clear()
-        
-        return messages
+        messages = await self.Socket.get_team_chat()
+        if len(self.Messages) == len(messages):
+            return False
+        newmessages = messages[len(self.Messages):]
+        self.Messages = messages
+        return newmessages
     
     async def GetMap(self):
         map = await self.Socket.get_map(add_grid=True, add_icons=True,add_events=True,add_vending_machines=True)

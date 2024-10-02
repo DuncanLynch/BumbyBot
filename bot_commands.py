@@ -4,17 +4,20 @@ import asyncio
 import UserSocket
 import time
 import io
+import sqlite3
 
 class RustCommands(commands.Cog): 
 
+    Messages = []
     Socket = UserSocket
-    GuildData = {}
-    UserData = {
+    GuildData = {
         "testSuperExamplethatwillneverbecaughtbyadiscordservername": {
             "ActiveTeamChat": False,
             "RemoveTeamChat":  False,
         }
     }
+    UserData = {}
+        
 
 
     def __init__(self, bot):
@@ -56,7 +59,9 @@ class RustCommands(commands.Cog):
             embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
             await ctx.send(embed=embed)
             return
-        self.UserData[ctx.author.name] = UserSocket
+        self.UserData[ctx.author.name].disconnect()
+        await self.EndTeamMessages(ctx)
+        self.UserData[ctx.author.name] = False
         embed = discord.Embed(title="Socket Cleared", description="",color=discord.Color.brand_red())
         embed.add_field(name="",value="You no longer have an active Socket paired.")
         embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
@@ -111,9 +116,9 @@ class RustCommands(commands.Cog):
         l = ""
         for i in range(len(tlist)):
             if tlist[i][1]:
-                l+= "|" + tlist[i][2] + "| " + tlist[i][0] + " /Online/ :white_check_mark:\n"
+                l+= "|" + str(tlist[i][2]) + "| " + tlist[i][0] + " /Online/ :white_check_mark:\n"
             else:
-                l+= "|" + tlist[i][2] + "| " + tlist[i][0] + " /Offline/ :x:\n"
+                l+= "|" + str(tlist[i][2]) + "| " + tlist[i][0] + " /Offline/ :x:\n"
         embed = discord.Embed(title="Current List of Team Members", description="",color=discord.Color.brand_green())
         embed.add_field(name="",value=l)
         embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
@@ -153,23 +158,19 @@ class RustCommands(commands.Cog):
         self.GuildData[ctx.guild.name]["TeamChatChannel"] = ctx.channel
 
         socket = self.UserData.get(ctx.author.name)
-
+        
+        
 
         while not(self.GuildData[ctx.guild.name]["RemoveTeamChat"]):
-
-            try:
-                
-                messagelist = await socket.GetNewMessages()
-            except:
-                print("Error occured: Breaking from the messages list.")
-                break
-            for i in range(len(messagelist)):
-                m = messagelist[i]
-                await ctx.send(m)
-
-            time.sleep(5)
+            messagelist = await socket.GetNewMessages()
+            if messagelist:
+                for i in range(len(messagelist)):
+                    m = "[" + str(messagelist[i].time) + "]" + " " + messagelist[i].name + ": " + messagelist[i].message
+                    await ctx.send(m)
+            await asyncio.sleep(1)
 
         return
+
 
     @commands.command()
     async def EndTeamMessages(self, ctx):
@@ -222,7 +223,6 @@ class RustCommands(commands.Cog):
             embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
             await ctx.send(embed=embed)
             return
-        6
 
         with io.BytesIO() as image_binary:
             GameMap.save(image_binary, 'PNG')
@@ -253,5 +253,20 @@ class RustCommands(commands.Cog):
             embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
             await ctx.send(embed=embed)
             return
+        
+    @commands.command()
+    async def help(self, ctx):
+        embed = discord.Embed(title="All Commands", description="",color=discord.Color.brand_green())
+        embed.add_field(name="!pair",value="Usage: !pair IP PlayerId PlayerToken Port\nPairs the rust socket and saves it for access while your credentials are valid. If the other functions don't work after the socket successfully pairs, then check your credentials, unpair, and try again.")
+        embed.add_field(name="!unpair",value="Removes the current paired websocket and resets all connected channels.")
+        embed.add_field(name="!msg",value="Usage: !msg [message]\nSends a message in game through teamchat. It takes the form {[name] sent an API Message: [message]}.")
+        embed.add_field(name="!promote",value="Usage: !promote [SteamID]\nGiven that the one who calls the command is the team leader, promotes the given player to team leader.")
+        embed.add_field(name="!teamlist",value="Grabs the current list of team members and their status as online or offline.")
+        embed.add_field(name="!GrabTeamMessages",value="Binds a updating list of team messages to the channel it is sent into.")
+        embed.add_field(name="!EndTeamMessages",value="Unbinds the channel with the team messages. Must be called in the same channel.")
+        embed.add_field(name="!map",value="Grabs the current server map with the grids, icons, events, and vending machines.")
+        embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
+        ctx.send(embed)
+        return
 
             
