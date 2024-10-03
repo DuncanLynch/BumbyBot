@@ -9,6 +9,7 @@ TOKEN = 817066201
 
 
 async def main():
+    #test
     connection = sqlite3.connect("userdata.db")
     cursor = connection.cursor()
     cursor.execute("SELECT * FROM UserData WHERE username = ?", ("hypadeficit",))
