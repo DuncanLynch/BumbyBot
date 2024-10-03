@@ -19,12 +19,26 @@ class RustCommands(commands.Cog):
     UserData = {}
         
 
-
+    #Initializes the commands and loads all userdata from the databases, which then will create usersockets for each username.
     def __init__(self, bot):
-        #do mysql stuff later i dont feel like doing it now LMAOOOOOOOOOOOOOOO
+        connection = sqlite3.connect("userdata.db")
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM UserData")
+        userData = cursor.fetchall()
+        connection.close()
+        for i in userData:
+            try:
+                newsocket = UserSocket(ip=i[1],playerid=i[2],playertoken=i[3],port=i[4])
+                userData[i[0]] = newsocket
+                newsocket.connect()
+            except:
+                print("An Error has occured when creating the Socket for " + i[0])
+        
         self.bot = bot
     
     @commands.command()
+    #Creates a Usersocket associated to the user who calls it, only if they do not have a socket paired already.
+    #Loads the data collected into a database.
     async def pair(self, ctx, *arg):
         if self.UserData.get(ctx.author.name):
             embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
@@ -46,12 +60,28 @@ class RustCommands(commands.Cog):
         await currSocket.connect()
         self.UserData[ctx.author.name] = currSocket
 
+        try:
+            connection = sqlite3.connect("userdata.db")
+            cursor = connection.cursor()
+            cursor.execute("SELECT * FROM UserData WHERE username = ?", (ctx.author.name,))
+            info = cursor.fetchone()
+            print(info)
+            if info is None:
+                cursor.execute("INSERT INTO UserData (username, IP, PlayerId, PlayerToken, Port) VALUES (?,?,?,?,?)", (ctx.author.name, str(arg[0]), str(arg[1]), str(arg[2]), str(arg[3])))
+            else:
+                cursor.execute("UPDATE UserData SET IP = ?, PlayerId = ?, PlayerToken = ?, Port = ?", (str(arg[0]),str(arg[1]),str(arg[2]),str(arg[3])))
+            connection.commit()
+        except:
+            print("Error inserting/updating into the database for user: ", ctx.author.name)
+
+
         embed = discord.Embed(title="Socket Connected", description="",color=discord.Color.brand_green())
         embed.add_field(name="",value="Your socket has been created. If no messages appear then you created the socket incorrectly and must unpair before pairing correctly again.")
         embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
         await ctx.send(embed=embed)
 
     @commands.command()
+    #Removes the paired UserSocket object to the player's name.
     async def unpair(self, ctx):
         if not(self.UserData.get(ctx.author.name)):
             embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
@@ -70,6 +100,7 @@ class RustCommands(commands.Cog):
         
 
     @commands.command()
+    #Sends a message in Rust team chat in the user has a socket paired.
     async def msg(self, ctx, *arg):
         message = ""
         if not(self.UserData.get(ctx.author.name)):
@@ -97,6 +128,7 @@ class RustCommands(commands.Cog):
         return
      
     @commands.command()
+    #Collects the team information and lists it in the format: [SteamId]: [Name] [isOnline]
     async def teamlist(self, ctx):
         if not(self.UserData.get(ctx.author.name)):
             embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
@@ -126,6 +158,7 @@ class RustCommands(commands.Cog):
 
     #make this work across multiple servers
     @commands.command()
+    #Grabs the team messages and updates them in a specificied channel until EndTeamMessages is called.
     async def GrabTeamMessages(self, ctx):
         if not(self.UserData.get(ctx.author.name)):
             embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
@@ -173,6 +206,7 @@ class RustCommands(commands.Cog):
 
 
     @commands.command()
+    #Ends !GrabTeamMessages. Only works if the user has a socket paired and a active teamchat stream.
     async def EndTeamMessages(self, ctx):
         if not(self.UserData.get(ctx.author.name)):
             embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
@@ -205,6 +239,7 @@ class RustCommands(commands.Cog):
         self.GuildData[ctx.guild.name]["RemoveTeamChat"] = True
 
     @commands.command()
+    #Sends the rust ingame map.
     async def map(self, ctx):
         if not(self.UserData.get(ctx.author.name)):
             embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
@@ -231,6 +266,7 @@ class RustCommands(commands.Cog):
         return
 
     @commands.command()
+    #Promotes the specified steamid to Leader.
     async def promote(self, ctx, *arg):
         if not(self.UserData.get(ctx.author.name)):
             embed = discord.Embed(title="Command Failed", description="",color=discord.Color.brand_red())
@@ -255,9 +291,10 @@ class RustCommands(commands.Cog):
             return
         
     @commands.command()
-    async def help(self, ctx):
+    #Displays all helpful information about each command.
+    async def commands(self, ctx):
         embed = discord.Embed(title="All Commands", description="",color=discord.Color.brand_green())
-        embed.add_field(name="!pair",value="Usage: !pair IP PlayerId PlayerToken Port\nPairs the rust socket and saves it for access while your credentials are valid. If the other functions don't work after the socket successfully pairs, then check your credentials, unpair, and try again.")
+        embed.add_field(inline=True,name="!pair",value="Usage: !pair IP PlayerId PlayerToken Port\nPairs the rust socket and saves it for access while your credentials are valid. If the other functions don't work after the socket successfully pairs, then check your credentials, unpair, and try again.")
         embed.add_field(name="!unpair",value="Removes the current paired websocket and resets all connected channels.")
         embed.add_field(name="!msg",value="Usage: !msg [message]\nSends a message in game through teamchat. It takes the form {[name] sent an API Message: [message]}.")
         embed.add_field(name="!promote",value="Usage: !promote [SteamID]\nGiven that the one who calls the command is the team leader, promotes the given player to team leader.")
@@ -266,7 +303,7 @@ class RustCommands(commands.Cog):
         embed.add_field(name="!EndTeamMessages",value="Unbinds the channel with the team messages. Must be called in the same channel.")
         embed.add_field(name="!map",value="Grabs the current server map with the grids, icons, events, and vending machines.")
         embed.set_footer(text="Requested by: " + ctx.author.name, icon_url=ctx.author.avatar)
-        ctx.send(embed)
+        await ctx.send(embed=embed)
         return
 
             
